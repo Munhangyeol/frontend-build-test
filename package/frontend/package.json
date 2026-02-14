@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "webpack --mode=production",
+    "clean": "rimraf dist",
+    "build": "npm run clean && npm webpack --mode=production",
     "dev": "webpack-dev-server --mode=development --open"
   },
   "dependencies": {

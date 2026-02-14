@@ -8,7 +8,6 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "app.js",
-    clean: true
   },
   resolve: {
     extensions: [".js", ".vue"],
