@@ -1,12 +1,39 @@
 export default {
-  ssr: false,            // SPA로 테스트 (충돌 테스트에 유리)
+  ssr: false,
   target: "static",
 
-  // vendor dist를 브라우저에서만 mount 하게(서버에서 window 접근 방지)
-  plugins: [
-    { src: "~/plugins/vendor-mount.client.js", mode: "client" }
-  ],
+  plugins: [{ src: "~/plugins/vendor-mount.client.js", mode: "client" }],
 
-  // (선택) 외부 dist CSS를 static에 둔 뒤 여기서 로드 가능
-  // css: ["~/assets/vendor.css"]
+  build: {
+    extend(config) {
+      const stripCompileTypeFromCssLoader = (useItem) => {
+        if (!useItem) return;
+
+        // useItem 형태 정규화
+        const item = typeof useItem === "string" ? { loader: useItem } : useItem;
+        if (!item.loader || !item.loader.includes("css-loader")) return;
+
+        const opt = item.options;
+        if (opt && opt.modules && opt.modules.compileType) {
+          // ✅ 핵심: css-loader 3.x에서 invalid인 옵션 제거
+          delete opt.modules.compileType;
+        }
+      };
+
+      const visitRule = (rule) => {
+        if (!rule) return;
+
+        // Nuxt는 rule.oneOf/use/loader 등이 섞여있음
+        if (rule.use) {
+          if (Array.isArray(rule.use)) rule.use.forEach(stripCompileTypeFromCssLoader);
+          else stripCompileTypeFromCssLoader(rule.use);
+        }
+
+        if (rule.oneOf) rule.oneOf.forEach(visitRule);
+        if (rule.rules) rule.rules.forEach(visitRule);
+      };
+
+      (config.module && config.module.rules || []).forEach(visitRule);
+    }
+  }
 };
